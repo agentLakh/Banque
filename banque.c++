@@ -1,11 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <sstream>
 
 using namespace std;
 
-// Fonction pour vérifier si un utilisateur existe dans le fichier
-bool verifierUtilisateur(const string& fichier, const string& nom, const string& prenom, const string& motDePasse) {
+// Fonction pour vérifier si un utilisateur existe dans le fichier et récupérer le solde
+bool verifierUtilisateur(const string& fichier, const string& nom, const string& prenom, const string& motDePasse, string& solde) {
     ifstream file(fichier);
     if (!file.is_open()) {
         cerr << "Erreur : impossible d'ouvrir le fichier." << endl;
@@ -16,7 +17,15 @@ bool verifierUtilisateur(const string& fichier, const string& nom, const string&
     string combinaison = nom + "," + prenom + "," + motDePasse;
 
     while (getline(file, ligne)) {
-        if (ligne == combinaison) {
+        stringstream ss(ligne);
+        string tempNom, tempPrenom, tempMotDePasse, tempSolde;
+        getline(ss, tempNom, ',');
+        getline(ss, tempPrenom, ',');
+        getline(ss, tempMotDePasse, ',');
+        getline(ss, tempSolde, ',');
+
+        if (tempNom == nom && tempPrenom == prenom && tempMotDePasse == motDePasse) {
+            solde = tempSolde;  // Récupère le solde
             file.close();
             return true;
         }
@@ -26,7 +35,7 @@ bool verifierUtilisateur(const string& fichier, const string& nom, const string&
     return false;
 }
 
-// Fonction pour ajouter un utilisateur dans le fichier
+// Fonction pour ajouter un utilisateur dans le fichier avec un solde initial
 void ajouterUtilisateur(const string& fichier, const string& nom, const string& prenom, const string& motDePasse) {
     ofstream file(fichier, ios::app);
     if (!file.is_open()) {
@@ -34,27 +43,30 @@ void ajouterUtilisateur(const string& fichier, const string& nom, const string& 
         return;
     }
 
-    file << nom << "," << prenom << "," << motDePasse << "\n";
+    file << nom << "," << prenom << "," << motDePasse << ",10000\n";  // Solde de base 10,000 FCFA
     file.close();
 }
 
 // Fonction pour gérer le sous-menu après connexion
-void afficherSousMenu() {
+void afficherSousMenu(const string& solde) {
     int choix;
 
     while (true) {
         cout << "\n--- MENU APRÈS CONNEXION ---" << endl;
-        cout << "1. Option 1 : Voir votre profil" << endl;
-        cout << "2. Option 2 : Modifier vos informations" << endl;
-        cout << "3. Retour au menu principal" << endl;
+        cout << "1. Voir solde" << endl;
+        cout << "2. Faire un depot" << endl;
+        cout << "3. Faire un retrait" << endl;
+        cout << "4. Retour au menu principal" << endl;
         cout << "Votre choix : ";
         cin >> choix;
 
         if (choix == 1) {
-            cout << "Vous avez choisi de voir votre profil !" << endl;
+            cout << "Votre solde actuel est de : " << solde << " FCFA" << endl;
         } else if (choix == 2) {
-            cout << "Vous avez choisi de modifier vos informations !" << endl;
+            cout << "Vous avez choisi de Faire un depot !" << endl;
         } else if (choix == 3) {
+            cout << "Vous avez choisi de Faire un retrait !" << endl;
+        } else if (choix == 4) {
             cout << "Retour au menu principal..." << endl;
             break;
         } else {
@@ -65,7 +77,7 @@ void afficherSousMenu() {
 
 int main() {
     string fichier = "utilisateurs.csv"; // Nom du fichier CSV
-    string nom, prenom, motDePasse;
+    string nom, prenom, motDePasse, solde;
     int choix;
 
     while (true) {
@@ -98,9 +110,9 @@ int main() {
             cout << "Entrez votre mot de passe : ";
             cin >> motDePasse;
 
-            if (verifierUtilisateur(fichier, nom, prenom, motDePasse)) {
+            if (verifierUtilisateur(fichier, nom, prenom, motDePasse, solde)) {
                 cout << "Connexion réussie !" << endl;
-                afficherSousMenu(); // Afficher le sous-menu après connexion
+                afficherSousMenu(solde); // Afficher le sous-menu avec le solde
             } else {
                 cout << "Vous n'avez pas de compte. Veuillez vous inscrire." << endl;
             }
